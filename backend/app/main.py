@@ -19,7 +19,14 @@ def on_startup():
 # Configure CORS for frontend
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],  # Frontend origin
+    allow_origins=[
+        "http://localhost:3000",
+        "https://to-do-webapp-chrb.vercel.app/",
+        "http://localhost:3002",
+        "http://localhost:3003",  # Frontend origin (fallback ports)
+        "http://localhost:3004",
+        "http://localhost:3005"
+    ],  # Frontend origin
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
