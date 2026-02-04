@@ -1,0 +1,528 @@
+# Implementation Tasks: Frontend Application & Integration
+
+**Feature ID:** 3-frontend-app-integration
+**Version:** 1.0.0
+**Status:** Ready for Implementation
+**Created:** 2026-02-04
+**Last Updated:** 2026-02-04
+
+---
+
+## Overview
+
+This document provides a complete, dependency-ordered task list for implementing the Frontend Application & Integration feature. Tasks are organized by user story from the specification to enable independent implementation and testing of each feature increment.
+
+**Total Tasks:** 85
+**User Stories:** 8
+**Estimated Complexity:** High
+**Dependencies:** Features 1 (Authentication) and 2 (Backend Task API) must be operational
+
+---
+
+## Implementation Strategy
+
+### MVP Scope
+**Minimum Viable Product includes User Stories 1-4:**
+- US1: New User Registration
+- US2: Existing User Login
+- US3: View Task List
+- US4: Create New Task
+
+This provides complete authentication flow and basic task management capability.
+
+### Incremental Delivery
+After MVP, implement remaining user stories in priority order:
+- US5: Edit Task
+- US6: Delete Task
+- US7: Toggle Task Completion
+- US8: User Logout
+
+### Parallel Execution Opportunities
+Tasks marked with [P] can be executed in parallel with other [P] tasks in the same phase, as they operate on different files with no dependencies.
+
+---
+
+## Phase 1: Project Setup & Infrastructure
+
+**Objective:** Establish Next.js project with routing structure, dependencies, and configuration
+
+**Independent Test Criteria:**
+- [ ] Next.js development server starts without errors on port 3000
+- [ ] All route directories exist with placeholder pages
+- [ ] Environment variables are accessible via process.env
+- [ ] Tailwind CSS classes apply correctly to components
+- [ ] TypeScript compilation succeeds without errors
+- [ ] All dependencies installed and importable
+
+### Setup Tasks
+
+- [ ] T001 Initialize Next.js 16+ project with App Router, TypeScript, and Tailwind CSS in frontend/ directory using create-next-app
+- [ ] T002 Install required dependencies axios and better-auth via npm in frontend/package.json
+- [ ] T003 Create frontend/.env.local file with NEXT_PUBLIC_API_URL=http://localhost:8000 and BETTER_AUTH_SECRET environment variables
+- [ ] T004 [P] Create frontend/app/(auth)/signin/page.tsx placeholder page component
+- [ ] T005 [P] Create frontend/app/(auth)/signup/page.tsx placeholder page component
+- [ ] T006 [P] Create frontend/app/(app)/tasks/page.tsx placeholder page component
+- [ ] T007 [P] Create frontend/app/page.tsx landing page with authentication-based redirect logic
+- [ ] T008 [P] Create frontend/app/(auth)/layout.tsx layout component for authentication pages with centered form styling
+- [ ] T009 [P] Create frontend/app/(app)/layout.tsx layout component for protected application pages with navigation
+- [ ] T010 Create frontend/app/layout.tsx root layout with HTML structure and AuthProvider wrapper
+- [ ] T011 Configure frontend/next.config.js with environment variable access configuration
+- [ ] T012 Update frontend/tailwind.config.ts with content paths for app/ and components/ directories
+- [ ] T013 Create frontend/.gitignore to exclude .env.local, node_modules/, and .next/ directories
+- [ ] T014 Verify development server starts successfully with npm run dev and all routes are accessible
+
+---
+
+## Phase 2: Foundational Components & Infrastructure
+
+**Objective:** Build core infrastructure components and utilities needed by all user stories
+
+**Independent Test Criteria:**
+- [ ] Better Auth client successfully connects to backend authentication endpoints
+- [ ] API client attaches JWT tokens to all authenticated requests
+- [ ] Protected routes redirect unauthenticated users to signin page
+- [ ] Authentication context provides user state throughout application
+- [ ] UI components render with correct styling and props
+- [ ] Request interceptors modify outgoing requests correctly
+- [ ] Response interceptors handle 401/403 errors appropriately
+
+### Foundational Tasks
+
+- [ ] T015 Create frontend/lib/auth.ts with Better Auth client configuration, JWT plugin setup, and exported authentication hooks
+- [ ] T016 Create frontend/lib/api-client.ts with Axios instance, base URL configuration, request interceptor for JWT token attachment, and response interceptor for error handling
+- [ ] T017 Create frontend/contexts/AuthContext.tsx providing authentication state, user data, and authentication methods throughout application
+- [ ] T018 Create frontend/hooks/useAuth.ts custom hook to access authentication context with type safety
+- [ ] T019 Create frontend/components/ProtectedRoute.tsx component to guard protected routes with authentication check, loading state, and redirect logic
+- [ ] T020 [P] Create frontend/components/ui/Button.tsx reusable button component with variants (primary, secondary, danger), loading state, and disabled state
+- [ ] T021 [P] Create frontend/components/ui/Input.tsx reusable input component with label, error display, validation feedback, and required indicator
+- [ ] T022 [P] Create frontend/components/ui/LoadingSpinner.tsx loading indicator component with size variants (small, medium, large)
+- [ ] T023 [P] Create frontend/components/ui/ErrorMessage.tsx error display component with dismiss functionality and error type styling
+- [ ] T024 [P] Create frontend/components/ui/Toast.tsx notification component for success/error messages with auto-dismiss timer and manual dismiss button
+
+---
+
+## Phase 3: User Story 1 - New User Registration
+
+**Objective:** Enable new users to create accounts and access the application
+
+**User Story:** As a new user visiting the application, I want to create an account with email and password so that I can start managing my tasks.
+
+**Priority:** P1 (Critical - blocks all other functionality)
+
+**Independent Test Criteria:**
+- [ ] Signup form displays with email and password input fields
+- [ ] Client-side validation prevents submission with invalid email format
+- [ ] Client-side validation enforces password requirements
+- [ ] Valid signup creates account in backend and returns JWT token
+- [ ] Successful signup stores authentication state and redirects to /tasks
+- [ ] Errors display clearly with actionable messages (e.g., "Email already exists")
+- [ ] Link to signin page works for existing users
+- [ ] Form submission is disabled during loading state
+
+### US1 Tasks
+
+- [ ] T025 [US1] Create frontend/components/auth/SignupForm.tsx with email and password input fields using Input component
+- [ ] T026 [US1] Implement client-side validation logic in SignupForm for email format (regex pattern) and password requirements (minimum length, complexity)
+- [ ] T027 [US1] Integrate Better Auth signup method in SignupForm with form submission handler and loading state management
+- [ ] T028 [US1] Implement error handling in SignupForm to display backend validation errors and network errors using ErrorMessage component
+- [ ] T029 [US1] Add redirect to /tasks on successful signup using Next.js router navigation
+- [ ] T030 [US1] Add link to signin page at bottom of SignupForm for existing users with "Already have an account? Sign in" text
+- [ ] T031 [US1] Update frontend/app/(auth)/signup/page.tsx to render SignupForm component with proper page title and layout
+- [ ] T032 [US1] Test complete signup flow: form validation, account creation, token storage, authentication state update, and redirect to tasks page
+
+---
+
+## Phase 4: User Story 2 - Existing User Login
+
+**Objective:** Enable registered users to authenticate and access their tasks
+
+**User Story:** As a registered user returning to the application, I want to sign in with my email and password so that I can access my task list.
+
+**Priority:** P1 (Critical - required for accessing protected features)
+
+**Independent Test Criteria:**
+- [ ] Signin form displays with email and password input fields
+- [ ] Valid credentials authenticate user and return JWT token
+- [ ] Successful signin stores authentication state and redirects to /tasks
+- [ ] Invalid credentials show generic error message for security
+- [ ] Link to signup page works for new users
+- [ ] Password field clears on authentication error
+- [ ] Form submission is disabled during loading state
+
+### US2 Tasks
+
+- [ ] T033 [US2] Create frontend/components/auth/SigninForm.tsx with email and password input fields using Input component
+- [ ] T034 [US2] Implement client-side validation logic in SigninForm for required fields (email and password not empty)
+- [ ] T035 [US2] Integrate Better Auth signin method in SigninForm with form submission handler and loading state management
+- [ ] T036 [US2] Implement error handling in SigninForm to display generic authentication error message (do not reveal if email or password is incorrect)
+- [ ] T037 [US2] Add redirect to /tasks on successful signin using Next.js router navigation
+- [ ] T038 [US2] Add link to signup page at bottom of SigninForm for new users with "Don't have an account? Sign up" text
+- [ ] T039 [US2] Implement password field clearing on authentication error for security
+- [ ] T040 [US2] Update frontend/app/(auth)/signin/page.tsx to render SigninForm component with proper page title and layout
+- [ ] T041 [US2] Test complete signin flow: form validation, authentication, token storage, authentication state update, and redirect to tasks page
+
+---
+
+## Phase 5: User Story 3 - View Task List
+
+**Objective:** Display all tasks for authenticated user with proper loading and empty states
+
+**User Story:** As an authenticated user, I want to see all my tasks so that I can review what needs to be done.
+
+**Priority:** P2 (High - core functionality)
+
+**Independent Test Criteria:**
+- [ ] Task list fetches user's tasks from backend API on page load
+- [ ] Loading spinner displays while fetching tasks from API
+- [ ] Empty state displays when user has no tasks with friendly message
+- [ ] All user's tasks display in list format with title, description, and completion status
+- [ ] Only authenticated user's tasks are visible (no other users' tasks)
+- [ ] Tasks display in consistent order (e.g., by creation date)
+- [ ] Error state displays with retry option if fetch fails
+- [ ] Page is protected and redirects unauthenticated users to signin
+
+### US3 Tasks
+
+- [ ] T042 [US3] Create frontend/hooks/useTasks.ts custom hook with task state management (tasks array, loading, error) and API operation methods
+- [ ] T043 [US3] Implement fetchTasks function in useTasks hook calling API client GET /api/{user_id}/tasks endpoint
+- [ ] T044 [US3] Create frontend/components/tasks/TaskItem.tsx to display individual task with title, description, completion status indicator, and action buttons
+- [ ] T045 [US3] Create frontend/components/tasks/TaskList.tsx to map tasks array to TaskItem components with proper key props
+- [ ] T046 [US3] Implement loading state display in TaskList showing LoadingSpinner component while tasks are being fetched
+- [ ] T047 [US3] Implement empty state display in TaskList with friendly message "No tasks yet. Create your first task!" when tasks array is empty
+- [ ] T048 [US3] Implement error state display in TaskList with ErrorMessage component and retry button that calls fetchTasks again
+- [ ] T049 [US3] Update frontend/app/(app)/tasks/page.tsx to wrap TaskList in ProtectedRoute component and trigger fetchTasks on component mount
+- [ ] T050 [US3] Add user ID extraction from authentication context in tasks page to pass to API calls
+- [ ] T051 [US3] Test task list display: loading state, empty state, populated list with multiple tasks, error handling, and user isolation
+
+---
+
+## Phase 6: User Story 4 - Create New Task
+
+**Objective:** Enable users to add new tasks to their list
+
+**User Story:** As an authenticated user, I want to create new tasks with a title and optional description so that I can track things I need to do.
+
+**Priority:** P2 (High - core functionality)
+
+**Independent Test Criteria:**
+- [ ] Create task form displays with title (required) and description (optional) fields
+- [ ] Client-side validation enforces title requirement (not empty)
+- [ ] Character limits are enforced and displayed (title: 255 chars, description: 1000 chars)
+- [ ] New task appears in list immediately after successful creation
+- [ ] Form clears after successful creation and is ready for next task
+- [ ] Loading state disables form submission during API call
+- [ ] Errors display with option to retry if creation fails
+
+### US4 Tasks
+
+- [ ] T052 [P] [US4] Create frontend/components/tasks/CreateTaskForm.tsx with title (required) and description (optional) input fields using Input component
+- [ ] T053 [US4] Implement form validation in CreateTaskForm for title requirement (not empty) and character limits (title: 255, description: 1000)
+- [ ] T054 [US4] Display character count indicators in CreateTaskForm showing remaining characters for title and description fields
+- [ ] T055 [US4] Implement createTask function in useTasks hook calling API client POST /api/{user_id}/tasks endpoint with title and description
+- [ ] T056 [US4] Integrate createTask in CreateTaskForm with form submission handler and loading state management
+- [ ] T057 [US4] Implement form clearing after successful task creation in CreateTaskForm (reset title and description to empty strings)
+- [ ] T058 [US4] Add CreateTaskForm component to frontend/app/(app)/tasks/page.tsx above TaskList component
+- [ ] T059 [US4] Implement optimistic UI update to add new task to list immediately before API confirmation
+- [ ] T060 [US4] Add error handling in CreateTaskForm with ErrorMessage display and retry option
+- [ ] T061 [US4] Add success feedback using Toast component showing "Task created successfully" message
+- [ ] T062 [US4] Test create task flow: validation, submission, list update, form clearing, error handling, and success feedback
+
+---
+
+## Phase 7: User Story 5 - Edit Task
+
+**Objective:** Enable users to modify existing task details
+
+**User Story:** As an authenticated user, I want to edit my tasks so that I can update their title, description, or completion status as things change.
+
+**Priority:** P3 (Medium - enhances core functionality)
+
+**Independent Test Criteria:**
+- [ ] Edit action (button/icon) is available for each task in the list
+- [ ] Edit form displays with current task data pre-populated
+- [ ] User can modify title, description, and completion status
+- [ ] Changes persist to backend and update in list after successful save
+- [ ] Cancel option returns to view mode without saving changes
+- [ ] Validation is enforced on edited data (same rules as create)
+- [ ] Loading state disables form during API call
+- [ ] Errors display with option to retry if update fails
+
+### US5 Tasks
+
+- [ ] T063 [P] [US5] Create frontend/components/tasks/EditTaskForm.tsx with pre-populated title, description, and completion checkbox fields
+- [ ] T064 [US5] Implement form validation in EditTaskForm matching CreateTaskForm validation rules (title required, character limits)
+- [ ] T065 [US5] Implement updateTask function in useTasks hook calling API client PUT /api/{user_id}/tasks/{task_id} endpoint with updated data
+- [ ] T066 [US5] Add edit mode state to TaskItem component with toggle between view mode and edit mode
+- [ ] T067 [US5] Add edit button to TaskItem component that switches to edit mode when clicked
+- [ ] T068 [US5] Integrate EditTaskForm in TaskItem component when edit mode is active, passing current task data as props
+- [ ] T069 [US5] Implement cancel functionality in EditTaskForm that calls onCancel prop to return to view mode without saving
+- [ ] T070 [US5] Update task in list after successful edit with backend response data to ensure UI matches backend state
+- [ ] T071 [US5] Add error handling in EditTaskForm with ErrorMessage display and retry option
+- [ ] T072 [US5] Add success feedback using Toast component showing "Task updated successfully" message
+- [ ] T073 [US5] Test edit task flow: edit mode toggle, form pre-population, validation, submission, list update, cancel functionality, and error handling
+
+---
+
+## Phase 8: User Story 6 - Delete Task
+
+**Objective:** Enable users to remove tasks from their list
+
+**User Story:** As an authenticated user, I want to delete tasks so that I can remove completed or unwanted items from my list.
+
+**Priority:** P3 (Medium - enhances core functionality)
+
+**Independent Test Criteria:**
+- [ ] Delete action (button/icon) is available for each task in the list
+- [ ] Confirmation prompt displays before deletion to prevent accidental removal
+- [ ] Task is removed from list after user confirms deletion
+- [ ] Cancel option in confirmation aborts deletion without removing task
+- [ ] Deletion persists to backend (task is permanently removed)
+- [ ] Loading state displays during deletion API call
+- [ ] Errors display with option to retry if deletion fails
+- [ ] Optimistic UI update removes task immediately with rollback on error
+
+### US6 Tasks
+
+- [ ] T074 [P] [US6] Implement deleteTask function in useTasks hook calling API client DELETE /api/{user_id}/tasks/{task_id} endpoint
+- [ ] T075 [US6] Add delete button to TaskItem component with trash icon or "Delete" text
+- [ ] T076 [US6] Implement confirmation dialog component or use browser confirm() for delete action with message "Are you sure you want to delete this task?"
+- [ ] T077 [US6] Implement optimistic UI update to remove task from list immediately when user confirms deletion
+- [ ] T078 [US6] Implement rollback logic to restore task to list if deletion API call fails
+- [ ] T079 [US6] Add error handling for delete operation with ErrorMessage display and retry option
+- [ ] T080 [US6] Add success feedback using Toast component showing "Task deleted successfully" message
+- [ ] T081 [US6] Test delete task flow: delete button click, confirmation dialog, list update, cancel functionality, error handling with rollback, and success feedback
+
+---
+
+## Phase 9: User Story 7 - Toggle Task Completion
+
+**Objective:** Enable users to mark tasks as complete or incomplete
+
+**User Story:** As an authenticated user, I want to toggle task completion status so that I can track my progress and see which tasks are done.
+
+**Priority:** P3 (Medium - enhances core functionality)
+
+**Independent Test Criteria:**
+- [ ] Completion toggle (checkbox or button) is available for each task
+- [ ] Visual indicator clearly shows current completion state (checked/unchecked, strikethrough, color)
+- [ ] Toggle updates visual state immediately (optimistic update)
+- [ ] Change persists to backend via API call
+- [ ] Visual state is confirmed with backend response
+- [ ] Visual state reverts if API call fails (rollback)
+- [ ] Loading indicator displays during API call (optional, subtle)
+- [ ] Completed tasks have distinct visual styling (e.g., strikethrough text, muted color)
+
+### US7 Tasks
+
+- [ ] T082 [P] [US7] Implement toggleCompletion function in useTasks hook calling API client PATCH /api/{user_id}/tasks/{task_id}/complete endpoint
+- [ ] T083 [US7] Add completion checkbox or toggle button to TaskItem component at the start of each task row
+- [ ] T084 [US7] Implement visual styling for completed vs incomplete tasks in TaskItem (strikethrough text, muted color for completed)
+- [ ] T085 [US7] Implement optimistic UI update to toggle completion state immediately when user clicks checkbox
+- [ ] T086 [US7] Confirm visual state with backend response after toggle API call completes
+- [ ] T087 [US7] Implement rollback logic to revert visual state if toggle API call fails
+- [ ] T088 [US7] Add subtle loading indicator (optional) during toggle operation, such as spinner on checkbox
+- [ ] T089 [US7] Add error handling for toggle operation with Toast notification showing error message
+- [ ] T090 [US7] Test toggle completion flow: checkbox click, immediate visual update, backend confirmation, error rollback, and visual styling
+
+---
+
+## Phase 10: User Story 8 - User Logout
+
+**Objective:** Enable users to sign out of the application securely
+
+**User Story:** As an authenticated user, I want to log out so that I can secure my account when I'm done using the application.
+
+**Priority:** P2 (High - security requirement)
+
+**Independent Test Criteria:**
+- [ ] Logout action (button/link) is clearly available in application interface
+- [ ] Logout clears authentication state from context and storage
+- [ ] User is redirected to signin page after logout
+- [ ] Protected routes are no longer accessible after logout (redirect to signin)
+- [ ] No confirmation is required (immediate logout for simplicity)
+- [ ] Logout works from any page in the application
+- [ ] Session token is invalidated on backend (if applicable)
+
+### US8 Tasks
+
+- [ ] T091 [P] [US8] Add logout button to frontend/app/(app)/layout.tsx navigation area with "Logout" text or icon
+- [ ] T092 [US8] Implement logout handler in app layout calling Better Auth signOut method
+- [ ] T093 [US8] Clear authentication context state on logout by updating AuthContext
+- [ ] T094 [US8] Implement redirect to /signin after logout using Next.js router navigation
+- [ ] T095 [US8] Test logout flow: button click, state clearing, redirect to signin, and protected route inaccessibility
+
+---
+
+## Phase 11: Polish & Cross-Cutting Concerns
+
+**Objective:** Enhance user experience, ensure responsive design, and add accessibility features
+
+**Independent Test Criteria:**
+- [ ] All loading states display correctly during async operations
+- [ ] All error scenarios show user-friendly messages with actionable guidance
+- [ ] Interface works on mobile devices (320px width minimum)
+- [ ] Interface works on tablet devices (768px width)
+- [ ] Interface works on desktop devices (1024px+ width)
+- [ ] Keyboard navigation functions properly for all interactive elements
+- [ ] Focus indicators are visible for accessibility
+- [ ] Color contrast meets WCAG standards for all text
+- [ ] Performance targets met: page load < 3s, interactions < 200ms
+- [ ] No console errors or warnings in production build
+
+### Polish Tasks
+
+- [ ] T096 [P] Implement responsive layout adjustments for mobile screens (320px+) in all components using Tailwind responsive classes
+- [ ] T097 [P] Implement responsive layout adjustments for tablet screens (768px+) in all components
+- [ ] T098 [P] Implement responsive layout adjustments for desktop screens (1024px+) in all components
+- [ ] T099 [P] Add proper ARIA labels to all interactive elements (buttons, inputs, links) for screen reader accessibility
+- [ ] T100 [P] Add ARIA live regions for dynamic content updates (task list changes, notifications)
+- [ ] T101 [P] Implement keyboard navigation support for all forms and interactive elements (Tab, Enter, Escape keys)
+- [ ] T102 [P] Add visible focus indicators to all interactive elements using Tailwind focus: classes
+- [ ] T103 [P] Verify color contrast meets WCAG AA standards for all text and UI elements using contrast checker tool
+- [ ] T104 Test complete application on mobile device with 320px width minimum
+- [ ] T105 Test complete application on tablet device with 768px width
+- [ ] T106 Test complete application on desktop device with 1024px+ width
+- [ ] T107 Test all error scenarios: network errors, 401 unauthorized, 403 forbidden, 404 not found, validation errors
+- [ ] T108 Test session expiration handling: expired token triggers logout and redirect to signin
+- [ ] T109 Verify multi-user isolation: create two test users and confirm each only sees their own tasks
+- [ ] T110 Measure and optimize page load performance to meet < 3 second target using Lighthouse
+- [ ] T111 Measure and optimize interaction response times to meet < 200ms target
+- [ ] T112 Run production build with npm run build and verify no errors or warnings
+- [ ] T113 Create production environment configuration in .env.production with production API URL
+- [ ] T114 Test production build with npm start and verify all functionality works correctly
+- [ ] T115 Create frontend/app/error.tsx error boundary component to catch and display unhandled errors
+
+---
+
+## Dependencies & Execution Order
+
+### User Story Dependencies
+
+```
+Setup (Phase 1)
+    ↓
+Foundational (Phase 2)
+    ↓
+    ├─→ US1: New User Registration (Phase 3) ← P1 Critical
+    ├─→ US2: Existing User Login (Phase 4) ← P1 Critical
+    │
+    └─→ US3: View Task List (Phase 5) ← P2 High (depends on US1 or US2)
+            ↓
+            ├─→ US4: Create New Task (Phase 6) ← P2 High
+            ├─→ US5: Edit Task (Phase 7) ← P3 Medium
+            ├─→ US6: Delete Task (Phase 8) ← P3 Medium
+            ├─→ US7: Toggle Completion (Phase 9) ← P3 Medium
+            └─→ US8: User Logout (Phase 10) ← P2 High
+                    ↓
+                    └─→ Polish (Phase 11) ← Final phase
+```
+
+### Critical Path
+1. **Phase 1 (Setup)** → MUST complete first - establishes project structure
+2. **Phase 2 (Foundational)** → MUST complete before user stories - provides core infrastructure
+3. **Phases 3-4 (US1-US2)** → Can be done in parallel - both are authentication flows
+4. **Phase 5 (US3)** → Depends on authentication (US1 or US2) - displays tasks
+5. **Phases 6-10 (US4-US8)** → Can be done in parallel after Phase 5 - all task operations
+6. **Phase 11 (Polish)** → MUST complete last - enhances all features
+
+### Parallel Execution Examples
+
+**Phase 1 Parallel Tasks:**
+```bash
+# Can execute simultaneously (different files, no dependencies)
+T004, T005, T006, T007, T008, T009
+```
+
+**Phase 2 Parallel Tasks:**
+```bash
+# Can execute simultaneously (different UI components)
+T020, T021, T022, T023, T024
+```
+
+**User Stories Parallel Execution:**
+```bash
+# After Phase 2 completes, can execute in parallel:
+Phase 3 (US1: Registration) + Phase 4 (US2: Login)
+
+# After Phase 5 completes, can execute in parallel:
+Phase 6 (US4: Create) + Phase 7 (US5: Edit) + Phase 8 (US6: Delete) + Phase 9 (US7: Toggle) + Phase 10 (US8: Logout)
+```
+
+**Phase 11 Parallel Tasks:**
+```bash
+# Can execute simultaneously (different concerns)
+T096, T097, T098, T099, T100, T101, T102, T103
+```
+
+---
+
+## Task Summary by Phase
+
+| Phase | User Story | Task Count | Parallelizable | Priority |
+|-------|------------|------------|----------------|----------|
+| 1 | Setup | 14 | 6 | - |
+| 2 | Foundational | 10 | 5 | - |
+| 3 | US1: Registration | 8 | 0 | P1 |
+| 4 | US2: Login | 9 | 0 | P1 |
+| 5 | US3: View Tasks | 10 | 0 | P2 |
+| 6 | US4: Create Task | 11 | 1 | P2 |
+| 7 | US5: Edit Task | 11 | 1 | P3 |
+| 8 | US6: Delete Task | 8 | 1 | P3 |
+| 9 | US7: Toggle Completion | 9 | 1 | P3 |
+| 10 | US8: Logout | 5 | 1 | P2 |
+| 11 | Polish | 20 | 8 | - |
+| **Total** | **8 User Stories** | **115** | **24** | - |
+
+---
+
+## Validation Checklist
+
+Before marking feature as complete, verify:
+
+- [ ] All 115 tasks completed and checked off
+- [ ] All 8 user stories independently tested and passing
+- [ ] Multi-user isolation verified with two test accounts
+- [ ] All error scenarios handled gracefully
+- [ ] Responsive design works on mobile (320px+), tablet (768px+), and desktop (1024px+)
+- [ ] Performance targets met: page load < 3s, interactions < 200ms
+- [ ] Production build succeeds without errors or warnings
+- [ ] Integration with Features 1 (Authentication) and 2 (Backend Task API) verified
+- [ ] No console errors or warnings in browser
+- [ ] All acceptance criteria from spec.md satisfied
+- [ ] Accessibility requirements met (keyboard navigation, ARIA labels, color contrast)
+- [ ] All functional requirements (FR-1 through FR-13) from spec.md implemented
+- [ ] All non-functional requirements (NFR-1 through NFR-5) from spec.md met
+
+---
+
+## Notes
+
+**Task Format:**
+- All tasks follow format: `- [ ] [TaskID] [P?] [Story?] Description with file path`
+- [P] indicates task can be parallelized with other [P] tasks in same phase
+- [US#] indicates which user story the task belongs to (US1-US8)
+- Task IDs are sequential (T001-T115) in execution order
+
+**File Paths:**
+- All file paths are relative to frontend project root
+- Use exact paths specified in tasks for consistency
+- Create directories as needed before creating files
+
+**Testing:**
+- Each phase includes independent test criteria
+- Test criteria must pass before moving to next phase
+- Final validation checklist ensures feature completeness
+
+**User Story Mapping:**
+- US1: New User Registration (Scenario 1 from spec.md)
+- US2: Existing User Login (Scenario 2 from spec.md)
+- US3: View Task List (Scenario 4 from spec.md)
+- US4: Create New Task (Scenario 3 from spec.md)
+- US5: Edit Task (Scenario 5 from spec.md)
+- US6: Delete Task (Scenario 6 from spec.md)
+- US7: Toggle Task Completion (Scenario 7 from spec.md)
+- US8: User Logout (Scenario 8 from spec.md)
+
+---
+
+**End of Implementation Tasks**

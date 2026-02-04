@@ -1,0 +1,7 @@
+# CLI-based Todo Application Requirements
+
+# This application uses only built-in Python libraries
+# No external dependencies required
+
+# Python version requirement
+python>=3.10

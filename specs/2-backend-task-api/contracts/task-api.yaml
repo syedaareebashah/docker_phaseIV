@@ -1,0 +1,567 @@
+openapi: 3.0.3
+info:
+  title: Backend Task Management API
+  description: |
+    RESTful API for managing user tasks with strict ownership enforcement.
+
+    **Key Features:**
+    - Complete CRUD operations for tasks
+    - User-scoped task management (users only see their own tasks)
+    - JWT-based authentication (integrated with Feature 1)
+    - Strict ownership enforcement at query level
+    - Deterministic, stateless API behavior
+
+    **Authentication:**
+    All endpoints require valid JWT token from Feature 1 (Authentication & User Isolation).
+    Token must be included in Authorization header: `Bearer <token>`
+
+    **User Isolation:**
+    - All operations filtered by authenticated user_id
+    - Cross-user access blocked with 403 Forbidden
+    - Task ownership cannot be transferred
+  version: 1.0.0
+  contact:
+    name: API Support
+    email: support@example.com
+
+servers:
+  - url: http://localhost:8000
+    description: Local development server
+  - url: https://api.example.com
+    description: Production server
+
+tags:
+  - name: Tasks
+    description: Task management operations
+
+paths:
+  /api/{user_id}/tasks:
+    get:
+      tags:
+        - Tasks
+      summary: List all tasks for authenticated user
+      description: |
+        Retrieve all tasks owned by the authenticated user.
+
+        **User Isolation:**
+        - Only returns tasks where user_id matches authenticated user
+        - Empty list returned if user has no tasks
+        - Other users' tasks are never included
+
+        **Ordering:**
+        Tasks returned in descending order by creation date (newest first)
+      operationId: listTasks
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: user_id
+          in: path
+          required: true
+          description: User ID (must match authenticated user)
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: List of tasks (may be empty)
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Task'
+              examples:
+                with_tasks:
+                  summary: User with tasks
+                  value:
+                    - id: 550e8400-e29b-41d4-a716-446655440000
+                      user_id: 660e8400-e29b-41d4-a716-446655440000
+                      title: Complete project documentation
+                      description: Write comprehensive API docs
+                      completed: false
+                      created_at: '2026-02-03T12:00:00Z'
+                      updated_at: '2026-02-03T12:00:00Z'
+                    - id: 770e8400-e29b-41d4-a716-446655440000
+                      user_id: 660e8400-e29b-41d4-a716-446655440000
+                      title: Review pull requests
+                      description: null
+                      completed: true
+                      created_at: '2026-02-03T11:00:00Z'
+                      updated_at: '2026-02-03T11:30:00Z'
+                empty_list:
+                  summary: User with no tasks
+                  value: []
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+
+    post:
+      tags:
+        - Tasks
+      summary: Create new task
+      description: |
+        Create a new task for the authenticated user.
+
+        **Ownership:**
+        - Task automatically assigned to authenticated user
+        - user_id in request body is ignored (if provided)
+        - Task ownership cannot be changed after creation
+
+        **Defaults:**
+        - completed: false
+        - created_at: current timestamp
+        - updated_at: current timestamp
+      operationId: createTask
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: user_id
+          in: path
+          required: true
+          description: User ID (must match authenticated user)
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TaskCreate'
+            examples:
+              with_description:
+                summary: Task with description
+                value:
+                  title: Complete project documentation
+                  description: Write comprehensive API docs
+              without_description:
+                summary: Task without description
+                value:
+                  title: Review pull requests
+      responses:
+        '201':
+          description: Task created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Task'
+              examples:
+                created:
+                  summary: Created task
+                  value:
+                    id: 550e8400-e29b-41d4-a716-446655440000
+                    user_id: 660e8400-e29b-41d4-a716-446655440000
+                    title: Complete project documentation
+                    description: Write comprehensive API docs
+                    completed: false
+                    created_at: '2026-02-03T12:00:00Z'
+                    updated_at: '2026-02-03T12:00:00Z'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+
+  /api/{user_id}/tasks/{task_id}:
+    get:
+      tags:
+        - Tasks
+      summary: Get single task by ID
+      description: |
+        Retrieve a specific task by ID.
+
+        **Ownership Verification:**
+        - Task must belong to authenticated user
+        - Returns 403 if task belongs to different user
+        - Returns 404 if task doesn't exist
+      operationId: getTask
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: user_id
+          in: path
+          required: true
+          description: User ID (must match authenticated user)
+          schema:
+            type: string
+            format: uuid
+        - name: task_id
+          in: path
+          required: true
+          description: Task ID
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Task details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Task'
+              examples:
+                task:
+                  summary: Task details
+                  value:
+                    id: 550e8400-e29b-41d4-a716-446655440000
+                    user_id: 660e8400-e29b-41d4-a716-446655440000
+                    title: Complete project documentation
+                    description: Write comprehensive API docs
+                    completed: false
+                    created_at: '2026-02-03T12:00:00Z'
+                    updated_at: '2026-02-03T12:00:00Z'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+
+    put:
+      tags:
+        - Tasks
+      summary: Update task
+      description: |
+        Update task fields (title, description, completed status).
+
+        **Partial Updates:**
+        - Only provided fields are updated
+        - Omitted fields remain unchanged
+        - updated_at timestamp automatically updated
+
+        **Ownership:**
+        - Task must belong to authenticated user
+        - Task ownership cannot be changed
+      operationId: updateTask
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: user_id
+          in: path
+          required: true
+          description: User ID (must match authenticated user)
+          schema:
+            type: string
+            format: uuid
+        - name: task_id
+          in: path
+          required: true
+          description: Task ID
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TaskUpdate'
+            examples:
+              update_all:
+                summary: Update all fields
+                value:
+                  title: Updated title
+                  description: Updated description
+                  completed: true
+              update_title_only:
+                summary: Update title only
+                value:
+                  title: New title
+      responses:
+        '200':
+          description: Task updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Task'
+              examples:
+                updated:
+                  summary: Updated task
+                  value:
+                    id: 550e8400-e29b-41d4-a716-446655440000
+                    user_id: 660e8400-e29b-41d4-a716-446655440000
+                    title: Updated title
+                    description: Updated description
+                    completed: true
+                    created_at: '2026-02-03T12:00:00Z'
+                    updated_at: '2026-02-03T12:05:00Z'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+
+    delete:
+      tags:
+        - Tasks
+      summary: Delete task
+      description: |
+        Permanently delete a task.
+
+        **Warning:**
+        - Deletion is permanent (no recovery)
+        - Task is immediately removed from database
+
+        **Ownership:**
+        - Task must belong to authenticated user
+      operationId: deleteTask
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: user_id
+          in: path
+          required: true
+          description: User ID (must match authenticated user)
+          schema:
+            type: string
+            format: uuid
+        - name: task_id
+          in: path
+          required: true
+          description: Task ID
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Task deleted successfully (no content)
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+
+  /api/{user_id}/tasks/{task_id}/complete:
+    patch:
+      tags:
+        - Tasks
+      summary: Toggle task completion status
+      description: |
+        Toggle the completion status of a task.
+
+        **Behavior:**
+        - If completed=false, sets to true
+        - If completed=true, sets to false
+        - updated_at timestamp automatically updated
+
+        **Ownership:**
+        - Task must belong to authenticated user
+      operationId: toggleTaskCompletion
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: user_id
+          in: path
+          required: true
+          description: User ID (must match authenticated user)
+          schema:
+            type: string
+            format: uuid
+        - name: task_id
+          in: path
+          required: true
+          description: Task ID
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Task completion status toggled
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Task'
+              examples:
+                marked_complete:
+                  summary: Task marked complete
+                  value:
+                    id: 550e8400-e29b-41d4-a716-446655440000
+                    user_id: 660e8400-e29b-41d4-a716-446655440000
+                    title: Complete project documentation
+                    description: Write comprehensive API docs
+                    completed: true
+                    created_at: '2026-02-03T12:00:00Z'
+                    updated_at: '2026-02-03T12:10:00Z'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: |
+        JWT token from Feature 1 (Authentication & User Isolation).
+
+        **Format:** Authorization: Bearer <token>
+
+        **Token contains:**
+        - user_id: Authenticated user's ID
+        - email: Authenticated user's email
+        - exp: Token expiration (1 hour)
+
+  schemas:
+    Task:
+      type: object
+      required:
+        - id
+        - user_id
+        - title
+        - completed
+        - created_at
+        - updated_at
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Unique task identifier
+          example: 550e8400-e29b-41d4-a716-446655440000
+        user_id:
+          type: string
+          format: uuid
+          description: Task owner (user ID)
+          example: 660e8400-e29b-41d4-a716-446655440000
+        title:
+          type: string
+          minLength: 1
+          maxLength: 255
+          description: Task title (required)
+          example: Complete project documentation
+        description:
+          type: string
+          nullable: true
+          maxLength: 1000
+          description: Task description (optional)
+          example: Write comprehensive API docs
+        completed:
+          type: boolean
+          description: Task completion status
+          example: false
+        created_at:
+          type: string
+          format: date-time
+          description: Task creation timestamp (ISO 8601)
+          example: '2026-02-03T12:00:00Z'
+        updated_at:
+          type: string
+          format: date-time
+          description: Last modification timestamp (ISO 8601)
+          example: '2026-02-03T12:00:00Z'
+
+    TaskCreate:
+      type: object
+      required:
+        - title
+      properties:
+        title:
+          type: string
+          minLength: 1
+          maxLength: 255
+          description: Task title (required, non-empty)
+          example: Complete project documentation
+        description:
+          type: string
+          maxLength: 1000
+          description: Task description (optional)
+          example: Write comprehensive API docs
+
+    TaskUpdate:
+      type: object
+      properties:
+        title:
+          type: string
+          minLength: 1
+          maxLength: 255
+          description: Updated task title
+          example: Updated title
+        description:
+          type: string
+          maxLength: 1000
+          nullable: true
+          description: Updated task description
+          example: Updated description
+        completed:
+          type: boolean
+          description: Updated completion status
+          example: true
+
+    ErrorResponse:
+      type: object
+      required:
+        - detail
+      properties:
+        detail:
+          type: string
+          description: Error message
+          example: Task not found
+
+  responses:
+    UnauthorizedError:
+      description: Missing, invalid, or expired JWT token
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            unauthorized:
+              summary: Not authenticated
+              value:
+                detail: Not authenticated
+
+    ForbiddenError:
+      description: Valid token but insufficient permissions (user_id mismatch or task ownership violation)
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            user_mismatch:
+              summary: User ID mismatch
+              value:
+                detail: Access forbidden
+            not_owner:
+              summary: Task belongs to different user
+              value:
+                detail: Access forbidden
+
+    NotFoundError:
+      description: Task not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            not_found:
+              summary: Task doesn't exist
+              value:
+                detail: Task not found
+
+    ValidationError:
+      description: Invalid request data
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            empty_title:
+              summary: Empty title
+              value:
+                detail: Title cannot be empty
+            title_too_long:
+              summary: Title exceeds max length
+              value:
+                detail: Title must be 255 characters or less
+
+security:
+  - BearerAuth: []
