@@ -13,7 +13,7 @@ export default function Home() {
       if (isAuthenticated) {
         router.push('/tasks')
       } else {
-        router.push('/signin')
+        router.push('/auth/signin') // ✅ FIX HERE
       }
     }
   }, [isAuthenticated, isLoading, router])
