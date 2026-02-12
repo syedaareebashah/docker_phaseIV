@@ -56,8 +56,8 @@ jobs:
         helm upgrade --install todo-chatbot ./todo-chatbot \
           --namespace todo-app \
           --create-namespace \
-          --set backend.image.repository=${{ secrets.DOCKER_USERNAME }}/todo-backend \
+          --set backend.image.repository=${{ secrets.DOCKERHUB_USERNAME }}/todo-backend \
           --set backend.image.tag=${{ github.sha }} \
-          --set frontend.image.repository=${{ secrets.DOCKER_USERNAME }}/todo-frontend \
+          --set frontend.image.repository=${{ secrets.DOCKERHUB_USERNAME }}/todo-frontend \
           --set frontend.image.tag=${{ github.sha }} \
           --wait
