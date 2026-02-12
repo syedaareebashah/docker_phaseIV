@@ -72,6 +72,7 @@ frontend/node_modules/
 
 # Deployment
 Procfile
+helm.exe
 
 # Debug/intent files
 debug_intent.py

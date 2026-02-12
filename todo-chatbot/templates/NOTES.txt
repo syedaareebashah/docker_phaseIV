@@ -1,0 +1,56 @@
+Thank you for installing {{ .Chart.Name }}!
+
+This Helm chart deploys a complete Todo Chatbot application with:
+- Frontend (Next.js) on port {{ .Values.frontend.service.port }}
+- Backend (FastAPI) on port {{ .Values.backend.service.port }}
+- PostgreSQL database
+- Redis cache
+
+{{- if .Values.ingress.enabled }}
+Access the application:
+{{- range $host := .Values.ingress.hosts }}
+{{- range .paths }}
+  http{{ if $.Values.ingress.tls }}s{{ end }}://{{ $host.host }}{{ .path }}
+{{- end }}
+{{- end }}
+{{- else }}
+Get the application URL by running these commands:
+
+# For the frontend:
+export FRONTEND_POD_NAME=$(kubectl get pods --namespace {{ .Release.Namespace }} -l "app={{ include "todo-chatbot.fullname" . }}-frontend" -o jsonpath="{.items[0].metadata.name}")
+export FRONTEND_CONTAINER_PORT=$(kubectl get pod --namespace {{ .Release.Namespace }} $FRONTEND_POD_NAME -o jsonpath="{.spec.containers[0].ports[0].containerPort}")
+echo "Visit http://127.0.0.1:3000 to access the frontend"
+kubectl --namespace {{ .Release.Namespace }} port-forward $FRONTEND_POD_NAME 3000:$FRONTEND_CONTAINER_PORT
+
+# For the backend:
+export BACKEND_POD_NAME=$(kubectl get pods --namespace {{ .Release.Namespace }} -l "app={{ include "todo-chatbot.fullname" . }}-backend" -o jsonpath="{.items[0].metadata.name}")
+export BACKEND_CONTAINER_PORT=$(kubectl get pod --namespace {{ .Release.Namespace }} $BACKEND_POD_NAME -o jsonpath="{.spec.containers[0].ports[0].containerPort}")
+echo "Visit http://127.0.0.1:8000 to access the backend API"
+kubectl --namespace {{ .Release.Namespace }} port-forward $BACKEND_POD_NAME 8000:$BACKEND_CONTAINER_PORT
+{{- end }}
+
+For local development with Minikube:
+1. Make sure your images are built and loaded into Minikube:
+   minikube image load hackathon-frontend:latest
+   minikube image load hackathon-backend:latest
+
+2. Install the chart:
+   helm install todo-chatbot-release . --namespace default --create-namespace
+
+3. Check the status of your pods:
+   kubectl get pods --namespace default
+
+4. View application logs:
+   kubectl logs -l app={{ include "todo-chatbot.fullname" . }}-backend --namespace default
+   kubectl logs -l app={{ include "todo-chatbot.fullname" . }}-frontend --namespace default
+
+{{- if .Values.ingress.enabled }}
+If using Minikube with ingress, enable the ingress addon:
+minikube addons enable ingress
+minikube tunnel  # Run this in a separate terminal to expose ingress externally
+{{- end }}
+
+For troubleshooting:
+- Check if all services are running: kubectl get svc
+- Check if all deployments are ready: kubectl get deployments
+- Check application logs: kubectl logs <pod-name>

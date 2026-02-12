@@ -1,0 +1,28 @@
+{{- if .Values.backend.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "todo-chatbot.fullname" . }}-backend-config
+  labels:
+    {{- include "todo-chatbot.labels" . | nindent 4 }}
+data:
+  DATABASE_URL: {{ .Values.backend.env.DATABASE_URL | quote }}
+  SECRET_KEY: {{ .Values.backend.env.SECRET_KEY | quote }}
+  ALGORITHM: {{ .Values.backend.env.ALGORITHM | quote }}
+  ACCESS_TOKEN_EXPIRE_MINUTES: {{ .Values.backend.env.ACCESS_TOKEN_EXPIRE_MINUTES | quote }}
+  NEON_DB_URL: {{ .Values.backend.env.NEON_DB_URL | quote }}
+  ENVIRONMENT: {{ .Values.backend.env.ENVIRONMENT | quote }}
+  REDIS_URL: {{ .Values.backend.env.REDIS_URL | quote }}
+{{- end }}
+
+{{- if .Values.frontend.enabled }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "todo-chatbot.fullname" . }}-frontend-config
+  labels:
+    {{- include "todo-chatbot.labels" . | nindent 4 }}
+data:
+  NEXT_PUBLIC_API_URL: {{ .Values.frontend.env.NEXT_PUBLIC_API_URL | quote }}
+{{- end }}
